@@ -2,6 +2,7 @@ import tensorflow as tf
 
 
 def get_lr_callback(batch_size=8, replicas=8):
+    """Get learning rate scheduling callback"""
     lr_start = 5 * 1e-6
     lr_max = 1.25 * 1e-6 * replicas * batch_size
     lr_min = 1 * 1e-6

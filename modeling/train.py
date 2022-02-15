@@ -8,6 +8,7 @@ import tensorflow as tf
 from tensorflow.keras import backend as K
 
 from .dataset import get_dataset
+from .model import build_model
 from .utils import count_data_items, make_results_plot
 from .lr_scheduling import get_lr_callback
 
@@ -79,7 +80,7 @@ def train_model(data_path, img_size=384, n_folds=5, batch_size=16, epochs=12,
         # Build model
         K.clear_session()
         with strategy.scope():
-            model = build_model(dim=img_size)
+            model = build_model(img_size)
 
         # Model checkpoint callback
         cb1 = tf.keras.callbacks.ModelCheckpoint(

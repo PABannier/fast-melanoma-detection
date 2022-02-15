@@ -4,6 +4,7 @@ from .utils import load_device_strategy
 
 
 def read_tfrecord(example):
+    """Reads a TFRecord file instance."""
     tfrec_format = {
         'image': tf.io.FixedLenFeature([], tf.string),
         'image_name': tf.io.FixedLenFeature([], tf.string),

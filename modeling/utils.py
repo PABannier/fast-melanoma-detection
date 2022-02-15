@@ -37,12 +37,13 @@ def load_device_strategy(device):
     if device != "TPU":
         print("Using default strategy for CPU and single GPU")
         strategy = tf.distribute.get_strategy()
+        tpu = None
 
     if device == "GPU":
         print("Num GPUs Available: ",
               len(tf.config.experimental.list_physical_devices('GPU')))
 
-    return tf.data.experimental.AUTOTUNE, strategy.num_replicas_in_sync
+    return tf.data.experimental.AUTOTUNE, strategy, tpu
 
 
 def count_data_items(filenames):
