@@ -50,24 +50,36 @@ This repo is divided into three main sections:
 
 ## How to use
 
+## Available models
+
+After trying and tuning many architectures, I decided to focus on the 3 following architectures:
+
+| Model name      | # of params | AUC (5-fold CV) |
+| --------------- | :---------: | --------------: |
+| EfficientNet-B3 |     12M     |           ????? |
+| EfficientNet-B5 |     28M     |           ????? |
+| SE-ResNeXT-50   |     28M     |           ????? |
+
 ## Roadmap
 
 _Analysis_:
 
-- [ ] Carry out an exploratory data analysis
-- [ ] Define an objective (e.g.: reduce false positives, false negatives...)
-- [ ] Choose a metric
+- [x] Carry out an exploratory data analysis
+- [x] Define an objective (e.g.: reduce false positives, false negatives...)
+- [x] Choose a metric
 
 _Modeling_:
 
-- [ ] Build a robust leak-free cross-validation strategy
-- [ ] Start with small computer vision model (e.g.: EfficientNetB1, ResNet34) to experiment
-  with data augmentation techniques and rebalancing techniques
-- [ ] Use larger computer vision architectures for better performance
-- [ ] Try more exotic procedure (ensembling...)
+- [x] Build a robust leak-free cross-validation strategy
+- [x] Start with small computer vision model (e.g.: EfficientNetB1, ResNet34) to experiment
+      with data augmentation techniques and rebalancing techniques
+- [x] Use larger computer vision architectures for better performance
 
 _Deployment_:
 
 - [ ] Write a preprocessing pipeline
-- [ ] Write an inference pipeline
+- [ ] Write an inference pipeline (include TTA in it)
 - [ ] Package the preprocessing and inference pipeline in a Streamlit app
+- [ ] Package the app in a Docker image
+- [ ] Write scripts for training in makefile with option for epochs, models, batch size, seed, number of folds, image sizes, TTA rounds
+- [ ] Create YAML configuration file (add a makefile command to run a specific YAML configuration file)
