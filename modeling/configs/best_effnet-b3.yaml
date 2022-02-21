@@ -28,3 +28,5 @@ modeling:
 
 post_processing:
   tta_rounds: 11
+
+plot_results: True

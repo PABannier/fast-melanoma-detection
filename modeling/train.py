@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
 from sklearn.model_selection import KFold
 from sklearn.metrics import roc_auc_score
@@ -13,9 +12,8 @@ from .utils import count_data_items, make_results_plot
 from .lr_scheduling import get_lr_callback
 
 
-def train_model(data_path, img_size=384, n_folds=5, batch_size=16, epochs=12,
-                tta_rounds=8, device="TPU", tpu=None, strategy=None,
-                replicas=8, plot_results=True, random_state=0):
+def train_model(data_path, cfg, device="TPU", tpu=None, strategy=None,
+                replicas=8):
     """The training pipeline. Note that the models are progressively saved
     after each fold fitting.
 
@@ -23,26 +21,14 @@ def train_model(data_path, img_size=384, n_folds=5, batch_size=16, epochs=12,
     ----------
     data_path : str
         The path containing the image records
-    img_size : int
-        Input image size
-    n_folds : int
-        Number of folds used to compute a metric
-    batch_size : int
-        Batch size
-    epochs : int
-        Number of epochs for training
-    tta_rounds : int
-        Number of refitting for test time augmentation
+    cfg : dict
+        Parameter dictionary
     device : str
         Device on which the model is trained
     tpu : ??
     strategy : ???
     replicas : int
         Number of replicas used for parallel training
-    plot_results : True
-        Plot loss and metric curves after fittign every fold
-    random_state : int
-        Random state
     """
     oof_pred = []
     oof_tar = []
@@ -50,7 +36,8 @@ def train_model(data_path, img_size=384, n_folds=5, batch_size=16, epochs=12,
     oof_names = []
     oof_folds = []
 
-    skf = KFold(n_splits=n_folds, shuffle=True, random_state=random_state)
+    skf = KFold(n_splits=cfg["validation"]["n_folds"], shuffle=True,
+                random_state=cfg["seed"])
     preds = np.zeros((count_data_items(files_test), 1))
 
     for fold, (train_idx , valid_idx) in enumerate(skf.split(np.arange(15))):
@@ -72,15 +59,15 @@ def train_model(data_path, img_size=384, n_folds=5, batch_size=16, epochs=12,
             np.array(tf.io.gfile.glob(data_path[fold] + '/test*.tfrec')))
 
         train_dataset = get_dataset(files_train, augment=True, shuffle=True,
-                                    repeat=True, dim=img_size,
-                                    batch_size=batch_size)
+                                    repeat=True, dim=cfg["input"]["image_size"],
+                                    batch_size=cfg["modeling"]["batch_size"])
         valid_dataset = get_dataset(files_valid, augment=False, shuffle=False,
-                                    repeat=False, dim=img_size)
+                                    repeat=False, dim=cfg["input"]["image_size"])
 
         # Build model
         K.clear_session()
         with strategy.scope():
-            model = build_model(img_size)
+            model = build_model(cfg["input"]["image_size"])
 
         # Model checkpoint callback
         cb1 = tf.keras.callbacks.ModelCheckpoint(
@@ -89,12 +76,14 @@ def train_model(data_path, img_size=384, n_folds=5, batch_size=16, epochs=12,
             save_freq='epoch')
 
         # Learning rate schedule callback
-        cb2 = get_lr_callback(batch_size)
+        cb2 = get_lr_callback(cfg["modeling"]["batch_size"])
 
         # Fitting the model
         print('Training...')
-        steps_per_epoch = count_data_items(files_train) / batch_size // replicas
-        history = model.fit(train_dataset, epochs=epochs, callbacks=[cb1, cb2],
+        steps_per_epoch = count_data_items(files_train) / \
+                          cfg["modeling"]["batch_size"] // replicas
+        history = model.fit(train_dataset, epochs=cfg["modeling"]["epochs"],
+                            callbacks=[cb1, cb2],
                             steps_per_epoch=steps_per_epoch,
                             validation_data=valid_dataset, verbose=True)
 
@@ -104,36 +93,42 @@ def train_model(data_path, img_size=384, n_folds=5, batch_size=16, epochs=12,
         # Predicting out-of-fold using test time augmentation
         print('Predicting OOF with TTA...')
         ds_valid = get_dataset(files_valid, augment=True, repeat=True,
-                               shuffle=False, dim=img_size,
-                               batch_size=batch_size)
+                               shuffle=False, dim=cfg["input"]["image_size"],
+                               batch_size=cfg["modeling"]["batch_size"])
         ct_valid = count_data_items(files_valid)
-        steps = tta_rounds * ct_valid / batch_size / 4 / replicas
+        steps = cfg["post_processing"]["tta_rounds"] * ct_valid / \
+                cfg["modeling"]["batch_size"] / 4 / replicas
         pred = model.predict(ds_valid, steps=steps,
-                             verbose=True)[:tta_rounds * ct_valid,]
-        oof_pred.append(np.mean(pred.reshape((ct_valid, tta_rounds), order='F'),
-                                             axis=1))
+                             verbose=True)\
+              [:cfg["post_processing"]["tta_rounds"] * ct_valid,]
+        oof_pred.append(np.mean(pred.reshape((ct_valid,
+                        cfg["post_processing"]["tta_rounds"]), order='F'),
+                        axis=1))
 
         # Get out-of-fold targets and names
         ds_valid = get_dataset(files_valid, augment=False, repeat=False,
-                               dim=img_size)
+                               dim=cfg["input"]["image_size"])
         oof_tar.append(np.array([target.numpy() for _, target in iter(
                        ds_valid.unbatch())]))
         oof_folds.append(np.ones_like(oof_tar[-1], dtype='int8') * fold)
-        ds = get_dataset(files_valid, augment=False, repeat=False, dim=img_size)
+        ds = get_dataset(files_valid, augment=False, repeat=False,
+                         dim=cfg["input"]["image_size"])
         oof_names.append(np.array([img_name.numpy().decode("utf-8")
                                    for _, img_name in iter(ds.unbatch())]))
 
         # Predict test using test time augmentation
         print('Predicting Test with TTA...')
         ds_test = get_dataset(files_test, augment=True, repeat=True,
-                              shuffle=False, dim=img_size,
-                              batch_size=batch_size * 4)
+                              shuffle=False, dim=cfg["input"]["image_size"],
+                              batch_size=cfg["modeling"]["batch_size"] * 4)
         ct_test = count_data_items(files_test)
-        steps = tta_rounds * ct_test / batch_size / 4 / replicas
+        steps = cfg["post_processing"]["tta_rounds"] * ct_test / \
+                cfg["modeling"]["batch_size"] / 4 / replicas
         pred = model.predict(ds_test, steps=steps,
-                             verbose=True)[:tta_rounds * ct_test,]
-        preds[:,0] += np.mean(pred.reshape((ct_test, tta_rounds), order='F'),
-                              axis=1)
+                             verbose=True) \
+               [:cfg["post_processing"]["tta_rounds"] * ct_test,]
+        preds[:,0] += np.mean(pred.reshape((ct_test,
+                      cfg["post_processing"]["tta_rounds"]), order='F'), axis=1)
 
         # Report results
         auc = roc_auc_score(oof_tar[-1], oof_pred[-1])
@@ -141,6 +136,7 @@ def train_model(data_path, img_size=384, n_folds=5, batch_size=16, epochs=12,
         print('#### FOLD %i OOF AUC without TTA = %.3f, with TTA = %.3f'
               % (fold + 1, oof_val[-1], auc))
 
-        # PLOT TRAINING
-        if plot_results:
-           make_results_plot(history, epochs, fold, img_size, "Model name")
+        # Plot training
+        if cfg["plot_results"]:
+           make_results_plot(history, cfg["modeling"]["epochs"], fold,
+                             cfg["input"]["image_size"], "Model name")
