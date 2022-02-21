@@ -58,10 +58,10 @@ def train_model(data_path, cfg, device="TPU", tpu=None, strategy=None,
         files_test = np.sort(
             np.array(tf.io.gfile.glob(data_path[fold] + '/test*.tfrec')))
 
-        train_dataset = get_dataset(files_train, augment=True, shuffle=True,
+        train_dataset = get_dataset(files_train, cfg, augment=True, shuffle=True,
                                     repeat=True, dim=cfg["input"]["image_size"],
                                     batch_size=cfg["modeling"]["batch_size"])
-        valid_dataset = get_dataset(files_valid, augment=False, shuffle=False,
+        valid_dataset = get_dataset(files_valid, cfg, augment=False, shuffle=False,
                                     repeat=False, dim=cfg["input"]["image_size"])
 
         # Build model
@@ -92,7 +92,7 @@ def train_model(data_path, cfg, device="TPU", tpu=None, strategy=None,
 
         # Predicting out-of-fold using test time augmentation
         print('Predicting OOF with TTA...')
-        ds_valid = get_dataset(files_valid, augment=True, repeat=True,
+        ds_valid = get_dataset(files_valid, cfg, augment=True, repeat=True,
                                shuffle=False, dim=cfg["input"]["image_size"],
                                batch_size=cfg["modeling"]["batch_size"])
         ct_valid = count_data_items(files_valid)
@@ -106,19 +106,19 @@ def train_model(data_path, cfg, device="TPU", tpu=None, strategy=None,
                         axis=1))
 
         # Get out-of-fold targets and names
-        ds_valid = get_dataset(files_valid, augment=False, repeat=False,
+        ds_valid = get_dataset(files_valid, cfg, augment=False, repeat=False,
                                dim=cfg["input"]["image_size"])
         oof_tar.append(np.array([target.numpy() for _, target in iter(
                        ds_valid.unbatch())]))
         oof_folds.append(np.ones_like(oof_tar[-1], dtype='int8') * fold)
-        ds = get_dataset(files_valid, augment=False, repeat=False,
+        ds = get_dataset(files_valid, cfg, augment=False, repeat=False,
                          dim=cfg["input"]["image_size"])
         oof_names.append(np.array([img_name.numpy().decode("utf-8")
                                    for _, img_name in iter(ds.unbatch())]))
 
         # Predict test using test time augmentation
         print('Predicting Test with TTA...')
-        ds_test = get_dataset(files_test, augment=True, repeat=True,
+        ds_test = get_dataset(files_test, cfg, augment=True, repeat=True,
                               shuffle=False, dim=cfg["input"]["image_size"],
                               batch_size=cfg["modeling"]["batch_size"] * 4)
         ct_test = count_data_items(files_test)

@@ -19,7 +19,7 @@ def read_tfrecord(example):
     return example['image'], example['target']
 
 
-def prepare_image(img, augment=True, dim=256):
+def prepare_image(img, cfg, augment=True, dim=256):
     """Reads the image and optionally applies transformation to it.
 
     Parameters
@@ -39,7 +39,12 @@ def prepare_image(img, augment=True, dim=256):
     img = tf.cast(img, tf.float32) / 255.0
 
     if augment:
-        img = transform(img, dim)
+        img = transform(img, dim, cfg["transform"]["rotation"],
+                        cfg["transform"]["shear"],
+                        cfg["transform"]["height_zoom"],
+                        cfg["transform"]["width_zoom"],
+                        cfg["transform"]["height_shift"],
+                        cfg["transform"]["width_shift"])
         img = tf.image.random_flip_left_right(img)
         img = tf.image.random_hue(img, 0.01)
         img = tf.image.random_saturation(img, 0.7, 1.3)
@@ -51,7 +56,7 @@ def prepare_image(img, augment=True, dim=256):
     return img
 
 
-def get_dataset(files, auto, replicas, augment=False, shuffle=False, 
+def get_dataset(files, cfg, auto, replicas, augment=False, shuffle=False,
                 repeat=False, batch_size=16, dim=256):
     """Gets the dataset to train the model on.
 
@@ -85,7 +90,7 @@ def get_dataset(files, auto, replicas, augment=False, shuffle=False,
     ds = ds.map(read_tfrecord, num_parallel_calls=auto)
     ds = ds.map(
         lambda img, imgname_or_label:
-            (prepare_image(img, augment=augment, dim=dim), imgname_or_label),
+            (prepare_image(img, cfg, augment=augment, dim=dim), imgname_or_label),
         num_parallel_calls=auto)
 
     ds = ds.batch(batch_size * replicas)
