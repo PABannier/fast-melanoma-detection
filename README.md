@@ -54,20 +54,20 @@ This repo is divided into three main sections:
 
 _Analysis_:
 
-- [] Carry out an exploratory data analysis
-- [] Define an objective (e.g.: reduce false positives, false negatives...)
-- [] Choose a metric
+- [ ] Carry out an exploratory data analysis
+- [ ] Define an objective (e.g.: reduce false positives, false negatives...)
+- [ ] Choose a metric
 
 _Modeling_:
 
-- [] Build a robust leak-free cross-validation strategy
-- [] Start with small computer vision model (e.g.: EfficientNetB1, ResNet34) to experiment
+- [ ] Build a robust leak-free cross-validation strategy
+- [ ] Start with small computer vision model (e.g.: EfficientNetB1, ResNet34) to experiment
   with data augmentation techniques and rebalancing techniques
-- [] Use larger computer vision architectures for better performance
-- [] Try more exotic procedure (ensembling...)
+- [ ] Use larger computer vision architectures for better performance
+- [ ] Try more exotic procedure (ensembling...)
 
 _Deployment_:
 
-- [] Write a preprocessing pipeline
-- [] Write an inference pipeline
-- [] Package the preprocessing and inference pipeline in a Streamlit app
+- [ ] Write a preprocessing pipeline
+- [ ] Write an inference pipeline
+- [ ] Package the preprocessing and inference pipeline in a Streamlit app
