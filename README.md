@@ -54,11 +54,13 @@ This repo is divided into three main sections:
 
 After trying and tuning many architectures, I decided to focus on the 3 following architectures:
 
-| Model name      | # of params | AUC (5-fold CV) |
-| --------------- | :---------: | --------------: |
-| EfficientNet-B3 |     12M     |           ????? |
-| EfficientNet-B5 |     28M     |           ????? |
-| SE-ResNeXT-50   |     28M     |           ????? |
+| Model name      | # of params | Image size | OOF CV AUC |
+| --------------- | :---------: | :--------: | ---------: |
+| EfficientNet-B3 |     12M     |    384     |    Pending |
+| EfficientNet-B5 |     28M     |    384     |      0.902 |
+| EfficientNet-B3 |     12M     |    512     |    ??????? |
+| EfficientNet-B5 |     28M     |    512     |     ?????? |
+| SE-ResNeXT-50   |     28M     |    384     |      ????? |
 
 ## Roadmap
 
