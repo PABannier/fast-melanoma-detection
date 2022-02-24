@@ -3,7 +3,7 @@ import yaml
 
 from kaggle_datasets import KaggleDatasets
 
-from .train import train_model
+from .train import train_model_kfold
 from .utils import load_device_strategy
 
 
@@ -31,4 +31,4 @@ if __name__ == "__main__":
 
     dataset_path = KaggleDatasets().get_gcs_path(
         f'melanoma-{cfg["input"]["image_size"]}x{cfg["input"]["image_size"]}')
-    train_model(dataset_path, cfg, args.device, tpu, strategy, replicas)
+    train_model_kfold(dataset_path, cfg, args.device, tpu, strategy, replicas)

@@ -12,8 +12,95 @@ from .utils import count_data_items, make_results_plot
 from .lr_scheduling import get_lr_callback
 
 
-def train_model(data_path, cfg, device="TPU", tpu=None, strategy=None,
-                replicas=8):
+def train_model_split(data_path, cfg, device="TPU", tpu=None, strategy=None,
+                      replicas=8):
+    """The training pipeline for the final models. This function trains the
+    model by splitting the dataset into a train and test sets.
+
+    Parameters
+    ----------
+    data_path : str
+        The path containing the image records
+    cfg : dict
+        Parameter dictionary
+    device : str
+        Device on which the model is trained
+    tpu : ??
+    strategy : ??
+    replicas : int
+        Number of replicas used for parallel training
+    """
+    # split = train_test_split(test_size=cfg["test_size"],
+    #                          random_state=cfg["seed"], shuffle=True)
+    preds = []
+
+    if device == "TPU":
+        if tpu:
+            tf.tpu.experimental.initialize_tpu_system(tpu)
+
+    print('#' * 25)
+    print('#### TRAINING')
+
+    files_train = tf.io.gfile.glob(
+        [data_path + '/train%.2i*.tfrec' % x for x in train_idx])
+    np.random.shuffle(files_train)
+
+    files_valid = tf.io.gfile.glob(
+        [data_path + '/train%.2i*.tfrec' % x for x in valid_idx])
+
+    train_dataset = get_dataset(files_train, cfg, augment=True, shuffle=True,
+                                repeat=True, dim=cfg["input"]["image_size"],
+                                batch_size=cfg["modeling"]["batch_size"])
+    valid_dataset = get_dataset(files_valid, cfg, augment=False, shuffle=False,
+                                repeat=False, dim=cfg["input"]["image_size"])
+
+    # Build model
+    K.clear_session()
+    with strategy.scope():
+        model = build_model(cfg["input"]["image_size"])
+
+    # Model checkpoint callback
+    cb1 = tf.keras.callbacks.ModelCheckpoint('final_model.h5',
+        monitor='val_loss', verbose=0, save_best_only=True,
+        save_weights_only=True, mode='min', save_freq='epoch')
+
+    # Learning rate schedule callback
+    cb2 = get_lr_callback(cfg["modeling"]["batch_size"])
+
+    # Fitting the model
+    steps_per_epoch = count_data_items(files_train) / \
+                        cfg["modeling"]["batch_size"] // replicas
+    history = model.fit(train_dataset, epochs=cfg["modeling"]["epochs"],
+                        callbacks=[cb1, cb2],
+                        steps_per_epoch=steps_per_epoch,
+                        validation_data=valid_dataset, verbose=True)
+
+    print('Loading best model...')
+    model.load_weights('final_model.h5')
+
+    print('Predicting OOF with TTA...')
+    ds_valid = get_dataset(files_valid, cfg, augment=True, repeat=True,
+                           shuffle=False, dim=cfg["input"]["image_size"],
+                           batch_size=cfg["modeling"]["batch_size"])
+    ct_valid = count_data_items(files_valid)
+    steps = cfg["post_processing"]["tta_rounds"] * ct_valid / \
+            cfg["modeling"]["batch_size"] / 4 / replicas
+    pred = model.predict(ds_valid, steps=steps, verbose=True) \
+            [:cfg["post_processing"]["tta_rounds"] * ct_valid,]
+    preds.append(np.mean(pred.reshape((ct_valid,
+                 cfg["post_processing"]["tta_rounds"]), order='F'),
+                 axis=1))
+
+    # Plot training
+    if cfg["plot_results"]:
+        make_results_plot(history, cfg["modeling"]["epochs"], 0,
+                            cfg["input"]["image_size"], "Model name")
+
+
+
+
+def train_model_kfold(data_path, cfg, device="TPU", tpu=None, strategy=None,
+                      replicas=8):
     """The training pipeline. Note that the models are progressively saved
     after each fold fitting.
 
