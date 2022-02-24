@@ -1,20 +1,11 @@
 import streamlit as st
 import tensorflow as tf
-from utils import preprocess_image
+# from utils import preprocess_image
 
 
 # Main presentation
 st.title("Melanoma classification")
 st.header("Take a picture of your mole and have it diagnosed in seconds!")
-
-st.markdown("Warning: This machine learning model has not gone through an \
-             extensive bias and performance review process, and is not \
-             intended to be used in production. Any use of this model as well \
-             as subsequent diagnosis shall be taken with extreme caution. The \
-             author declines any responsibility in case of any misdiagnosis \
-             and detrimental consequences to a patient health. Patients should \
-             always consult a qualified practitioner.")
-
 
 @st.cache
 def make_prediction(image, model):
@@ -38,7 +29,7 @@ def make_prediction(image, model):
     pred_score : float
         The confidence score of the prediction
     """
-    image = preprocess_image(image)
+    # image = preprocess_image(image)
     # For memory purposes, cast to int16
     image = tf.cast(tf.expand_dims(image, axis=0), tf.int16)
     preds = None
@@ -53,6 +44,21 @@ choose_model = st.sidebar.selectbox(
      "EfficientNet-B5",
      "ResNet-50")
 )
+
+st.sidebar.markdown(
+    "Warning: This machine learning model has not gone through an extensive \
+     performance review process, and is not intended to be used in \
+     production. Any use of this model as well as subsequent diagnosis shall \
+     be taken with extreme precaution. The author declines any responsibility in \
+     case of any erroneous diagnosis and potential detrimental consequences to \
+     a patient health. Patients should always consult a qualified practitioner.")
+
+
+models = {
+    "effnet_b3": "Hello",
+    "effnet_b5": "World",
+    "se-resnext-50": "barbaz"
+}
 
 
 # Model choice logic
