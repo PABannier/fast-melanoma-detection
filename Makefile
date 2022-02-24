@@ -1,5 +1,5 @@
 run-app:
-	@streamlit run app.py
+	@streamlit run deployment/app.py
 
 run-container:
 	@docker build .

@@ -56,11 +56,11 @@ After trying and tuning many architectures, I decided to focus on the 3 followin
 
 | Model name      | # of params | Image size | OOF CV AUC |
 | --------------- | :---------: | :--------: | ---------: |
-| EfficientNet-B3 |     12M     |    384     |    Pending |
+| EfficientNet-B3 |     12M     |    384     |      0.905 |
 | EfficientNet-B5 |     28M     |    384     |      0.902 |
-| EfficientNet-B3 |     12M     |    512     |    ??????? |
-| EfficientNet-B5 |     28M     |    512     |     ?????? |
-| SE-ResNeXT-50   |     28M     |    384     |      ????? |
+| EfficientNet-B3 |     12M     |    512     |      0.892 |
+| EfficientNet-B5 |     28M     |    512     |      0.905 |
+| SE-ResNeXT-50   |     28M     |    512     |      ????? |
 
 ## Roadmap
 
@@ -76,6 +76,8 @@ _Modeling_:
 - [x] Start with small computer vision model (e.g.: EfficientNetB1, ResNet34) to experiment
       with data augmentation techniques and rebalancing techniques
 - [x] Use larger computer vision architectures for better performance
+- [ ] Test different training strategies
+- [ ] Retrain 3 best models on the full dataset (except a test set)
 
 _Deployment_:
 
