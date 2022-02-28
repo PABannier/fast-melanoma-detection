@@ -6,6 +6,11 @@ __pycache__/
 # C extensions
 *.so
 
+# Models
+*.h5
+
+.DS_Store
+
 # Distribution / packaging
 .Python
 build/

@@ -1,0 +1,7 @@
+efficientnet==1.1.1
+matplotlib==3.4.1
+numpy==1.22.2
+PyYAML==6.0
+scikit_learn==1.0.2
+streamlit==1.5.1
+tensorflow==2.8.0
