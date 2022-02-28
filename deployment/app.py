@@ -1,6 +1,12 @@
 import streamlit as st
 import tensorflow as tf
 # from utils import preprocess_image
+from utils import build_model
+
+models = {
+    "effnet_b3": "./models/B3-512.h5",
+    "effnet_b5": "./models/B5-512.h5"
+}
 
 
 # Main presentation
@@ -8,7 +14,7 @@ st.title("Melanoma classification")
 st.header("Take a picture of your mole and have it diagnosed in seconds!")
 
 @st.cache
-def make_prediction(image, model):
+def make_prediction(image, model_path):
     """Predicts image by using model. Note that this function is cached to
     prevent Streamlit to constantly re-predict the image at every user iteraction
     with the app.
@@ -31,8 +37,11 @@ def make_prediction(image, model):
     """
     # image = preprocess_image(image)
     # For memory purposes, cast to int16
+    model = build_model(512)
+    model.load_weights(model_path)
+
     image = tf.cast(tf.expand_dims(image, axis=0), tf.int16)
-    preds = None
+    preds = model(image)
     pred_class = None
     pred_conf = None
     return pred_class, pred_conf
@@ -54,20 +63,11 @@ st.sidebar.markdown(
      a patient health. Patients should always consult a qualified practitioner.")
 
 
-models = {
-    "effnet_b3": "Hello",
-    "effnet_b5": "World",
-    "se-resnext-50": "barbaz"
-}
-
-
 # Model choice logic
 if choose_model == "EfficientNet-B3":
     MODEL = models["effnet_b3"]
-elif choose_model == "EfficientNet-B5":
-    MODEL = models["effnet_b5"]
 else:
-    MODEL = models["resnet-50"]
+    MODEL = models["effnet_b5"]
 
 
 # File uploader allows user to add their own image
@@ -95,6 +95,6 @@ if pred_button:
 if st.session_state["pred_button"]:
     st.session_state["image"], st.session_state["pred_class"], \
     st.session_state["pred_conf"] = make_prediction(
-        st.session_state["uploaded_image"], model=MODEL)
+        st.session_state["uploaded_image"], MODEL)
     st.write("Prediction: %s, Confidence: %.2f" % \
         (st.session_state["pred_class"], st.session_state["pred_conf"]))
