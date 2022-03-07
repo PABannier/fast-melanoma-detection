@@ -60,7 +60,6 @@ After trying and tuning many architectures, I decided to focus on the 3 followin
 | EfficientNet-B5 |     28M     |    384     |      0.902 |
 | EfficientNet-B3 |     12M     |    512     |      0.892 |
 | EfficientNet-B5 |     28M     |    512     |      0.905 |
-| SE-ResNeXT-50   |     28M     |    512     |      ????? |
 
 ## Roadmap
 
@@ -76,14 +75,14 @@ _Modeling_:
 - [x] Start with small computer vision model (e.g.: EfficientNetB1, ResNet34) to experiment
       with data augmentation techniques and rebalancing techniques
 - [x] Use larger computer vision architectures for better performance
-- [ ] Test different training strategies
-- [ ] Retrain 3 best models on the full dataset (except a test set)
+- [x] Test different training strategies
+- [x] Retrain 3 best models on the full dataset (except a test set)
 
 _Deployment_:
 
-- [ ] Write a preprocessing pipeline
-- [ ] Write an inference pipeline (include TTA in it)
-- [ ] Package the preprocessing and inference pipeline in a Streamlit app
-- [ ] Package the app in a Docker image
-- [ ] Write scripts for training in makefile with option for epochs, models, batch size, seed, number of folds, image sizes, TTA rounds
-- [ ] Create YAML configuration file (add a makefile command to run a specific YAML configuration file)
+- [x] Write a preprocessing pipeline
+- [x] Write an inference pipeline (include TTA in it)
+- [x] Package the preprocessing and inference pipeline in a Streamlit app
+- [x] Package the app in a Docker image
+- [x] Write scripts for training in makefile with option for epochs, models, batch size, seed, number of folds, image sizes, TTA rounds
+- [x] Create YAML configuration file (add a makefile command to run a specific YAML configuration file)
