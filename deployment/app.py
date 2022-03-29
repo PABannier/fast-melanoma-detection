@@ -1,7 +1,10 @@
 import streamlit as st
 import tensorflow as tf
+
+from PIL import Image
+
 # from utils import preprocess_image
-from utils import build_model
+from utils import build_model, preprocess_image
 
 models = {
     "effnet_b3": "./models/B3-512.h5",
@@ -14,7 +17,7 @@ st.title("Melanoma classification")
 st.header("Take a picture of your mole and have it diagnosed in seconds!")
 
 @st.cache
-def make_prediction(image, model_path):
+def make_prediction(image, model_key):
     """Predicts image by using model. Note that this function is cached to
     prevent Streamlit to constantly re-predict the image at every user iteraction
     with the app.
@@ -22,7 +25,7 @@ def make_prediction(image, model_path):
     Parameters
     ----------
     image :
-        Original image to predict
+        Image to predict
 
     model :
         Tensorflow model
@@ -35,23 +38,22 @@ def make_prediction(image, model_path):
     pred_score : float
         The confidence score of the prediction
     """
-    # image = preprocess_image(image)
-    # For memory purposes, cast to int16
-    model = build_model(512)
+    model_path = models[model_key]
+    model = build_model(dim=512, ef=int(model_key[-1]))
     model.load_weights(model_path)
 
-    image = tf.cast(tf.expand_dims(image, axis=0), tf.int16)
+    image = preprocess_image(image)
+
     preds = model(image)
-    pred_class = None
-    pred_conf = None
+    pred_conf = float(preds[0][0])
+    pred_class = "Malignant" if pred_conf > 0.5 else "Benign"
     return pred_class, pred_conf
 
 
 choose_model = st.sidebar.selectbox(
     "Pick a model for inference",
     ("EfficientNet-B3",
-     "EfficientNet-B5",
-     "ResNet-50")
+     "EfficientNet-B5",)
 )
 
 st.sidebar.markdown(
@@ -65,9 +67,9 @@ st.sidebar.markdown(
 
 # Model choice logic
 if choose_model == "EfficientNet-B3":
-    MODEL = models["effnet_b3"]
+    MODEL = "effnet_b3"
 else:
-    MODEL = models["effnet_b5"]
+    MODEL = "effnet_b5"
 
 
 # File uploader allows user to add their own image
@@ -84,8 +86,8 @@ if not uploaded_file:
     st.warning("Please upload an image.")
     st.stop()
 else:
-    st.session_state["uploaded_image"] = uploaded_file.read()
-    st.image(st.session_state["uploaded_image"], use_column_width=True)
+    st.session_state["image_to_predict"] = Image.open(uploaded_file)
+    st.image(st.session_state["image_to_predict"], use_column_width=True)
     pred_button = st.button("Predict")
 
 if pred_button:
@@ -93,8 +95,7 @@ if pred_button:
 
 # If the user has pressed the button, we display the image and predict the mole
 if st.session_state["pred_button"]:
-    st.session_state["image"], st.session_state["pred_class"], \
-    st.session_state["pred_conf"] = make_prediction(
-        st.session_state["uploaded_image"], MODEL)
+    st.session_state["pred_class"], st.session_state["pred_conf"] = make_prediction(
+        st.session_state["image_to_predict"], MODEL)
     st.write("Prediction: %s, Confidence: %.2f" % \
         (st.session_state["pred_class"], st.session_state["pred_conf"]))
