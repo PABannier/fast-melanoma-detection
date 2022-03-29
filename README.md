@@ -21,7 +21,7 @@ to infer the malignancy of a mole. It is the main deliverable of this repo.
 
 ## Demonstration
 
-![Demo](payload/demo.gif)
+![Demo](docs/demo.gif)
 
 ## Disclaimer
 
