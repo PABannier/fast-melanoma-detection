@@ -1,6 +1,6 @@
 FROM python:3.6
 
-EXPOSE 3000
+EXPOSE 8501
 
 RUN pip install -U pip
 

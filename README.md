@@ -50,6 +50,20 @@ This repo is divided into three main sections:
 
 ## How to use
 
+The safest way to ensure the app is working is to run the app within a Docker container.
+
+To build the Docker image, run:
+
+```
+docker build -f Dockerfile -t <YOUR_USERNAME>/melanoma_web_app .
+```
+
+Then, to launch the app:
+
+```
+docker run -p 8501:8501 <YOUR_USERNAME>/melanoma_web_app .
+```
+
 ## Available models
 
 After trying and tuning many architectures, I decided to focus on the 3 following architectures:

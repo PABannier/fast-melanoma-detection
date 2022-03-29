@@ -5,14 +5,12 @@ import numpy as np
 
 from PIL import Image
 
-# from utils import preprocess_image
 from utils import build_model, build_dataset
 from gradcam import grad_cam, get_superimposed_visualization
 from dataset import classes
-from html_markdown import (app_off, app_off2, model_predicting, loading_bar, 
-                           result_pred, image_uploaded_success, more_options,
-                           class0, class1, class0_side, class1_side, s_load_bar,
-                           unknown, unknown_side, unknown_w, unknown_msg)
+from html_markdown import (app_off, app_off2, model_predicting,
+                           image_uploaded_success, class0, class1,
+                           class0_side, class1_side)
 
 
 DIM = 384
@@ -80,9 +78,9 @@ def make_prediction(image):
     #heatmap = grad_cam(model, image, "top_conv")
     #out_gradcam = get_superimposed_visualization(image, heatmap)
     #st.image(out_gradcam, width=528, channels="RGB")
-    
+
     #Display the class probabilities table
-    st.title('**Class predictions:**') 
+    st.title('**Class predictions:**')
     classes['class probability %'] = [proba, 1 - proba]
     classes['class probability %'] = classes['class probability %'] * 100
     classes_proba = classes.style.background_gradient(cmap='Reds')
@@ -101,23 +99,3 @@ else:
     image = Image.open(uploaded_file)
     make_prediction(image)
     del image
-
-
-# # Create app logic
-# if not uploaded_file:
-#     st.warning("Please upload an image.")
-#     st.stop()
-# else:
-#     st.session_state["image_to_predict"] = Image.open(uploaded_file)
-#     st.image(st.session_state["image_to_predict"], use_column_width=True)
-#     pred_button = st.button("Predict")
-
-# if pred_button:
-#     st.session_state["pred_button"] = True
-
-# # If the user has pressed the button, we display the image and predict the mole
-# if st.session_state["pred_button"]:
-#     st.session_state["pred_class"], st.session_state["pred_conf"] = make_prediction(
-#         st.session_state["image_to_predict"])
-#     st.write("Prediction: %s, Confidence: %.2f" % \
-#         (st.session_state["pred_class"], st.session_state["pred_conf"]))
