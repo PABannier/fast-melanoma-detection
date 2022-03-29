@@ -1,4 +1,4 @@
-# A deep-learning application to melanoma classification
+# A Web app for malignant melanoma classification with deep learning
 
 ## Demonstration
 
