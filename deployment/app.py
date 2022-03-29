@@ -1,4 +1,5 @@
 import streamlit as st
+
 import tensorflow as tf
 import numpy as np
 
@@ -6,6 +7,7 @@ from PIL import Image
 
 # from utils import preprocess_image
 from utils import build_model, build_dataset
+from gradcam import grad_cam, get_superimposed_visualization
 from dataset import classes
 from html_markdown import (app_off, app_off2, model_predicting, loading_bar, 
                            result_pred, image_uploaded_success, more_options,
@@ -17,6 +19,8 @@ DIM = 384
 TTA = 50
 
 banner_path = "payload/Banner.png"
+
+st.set_option("deprecation.showfileUploaderEncoding", False)
 
 st.title("Melanoma classification Web App")
 
@@ -46,7 +50,6 @@ def make_prediction(image):
     pred_score : float
         The confidence score of the prediction.
     """
-    # model_path = models[model_key]
     model = build_model(dim=DIM, ef=3)
     model.load_weights("models/B3-512.h5")
 
@@ -70,6 +73,13 @@ def make_prediction(image):
         st.write("The predicted class is: **Benign**")
 
     st.sidebar.markdown("**Scroll down to read the full report (class probabilities)**")
+
+    # Display GradCAM visualization
+    st.title("GradCAM visualization")
+    st.write('GradCAM *(Class Activation Map)* highlights the important regions in the image for predicting the class concept. It helps to understand if the model based its predictions on the correct regions of the image.')
+    #heatmap = grad_cam(model, image, "top_conv")
+    #out_gradcam = get_superimposed_visualization(image, heatmap)
+    #st.image(out_gradcam, width=528, channels="RGB")
     
     #Display the class probabilities table
     st.title('**Class predictions:**') 
