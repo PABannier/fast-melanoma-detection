@@ -2,68 +2,84 @@ import numpy as np
 import matplotlib.cm as cm
 import tensorflow as tf
 from tensorflow import keras
+from tf_keras_vis.gradcam_plus_plus import GradcamPlusPlus
+from tk_keras_vis.saliency import Saliency
+from tf_keras_vis.utils.model_modifiers import ReplaceToLinear
 
 
-def grad_cam(model, image, last_conv_layer_name="top_conv"):
-    """Generate a GradCAM visualization for model interpretability.
+
+def _score_function(logit):
+    """Transforms a proba logit into a tuple of proba (positive, negative)"""
+    return (logit, 1 - logit)
+
+
+def grad_cam(model, image):
+    """Generate a GradCAM++ visualization for model interpretability.
 
     Parameters
     ----------
-    model : tf.model
+    model : tf.keras.models.Model
         The CNN model.
 
     image : tf.Dataset, (1, img_size, img_size, 3)
-        Dataset containing the image
-
-    last_conv_layer_name : str
-        The last convolution layer name (needed for GradCAM).
+        Dataset containing the image.
 
     Returns
     -------
-    gc_image : array, (img_size, img_size, 3)
-        The image with a GradCAM overlay.
+    heatmap : array, (img_size, img_size, 3)
+        The class activation map.
     """
-    last_conv_layer = model.get_layer(last_conv_layer_name)
-    grad_model = tf.keras.models.Model(model.inputs, [last_conv_layer.output, model.output])
+    gradcam = GradcamPlusPlus(model, model_modifier=ReplaceToLinear(), clone=True)
+    cam = gradcam(_score_function, next(iter(image)), penultimate_layer=-1)
+    # Rescale heatmap to a range 0-255
+    heatmap = np.uint8(cm.jet(cam)[..., :3] * 255)
+    return heatmap
 
-    with tf.GradientTape() as tape:
-        last_conv_layer_output, preds = grad_model(next(iter(image)))
-        class_channel = preds  # Output neuron (here a sigmoid logit)
 
-    grads = tape.gradient(class_channel, last_conv_layer_output)
-    pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
+def smooth_grad(model, image):
+    """Generate a SmoothGrad visualization for model interpretability.
 
-    last_conv_layer_output = last_conv_layer_output[0]
-    heatmap = last_conv_layer_output @ pooled_grads[..., tf.newaxis]
-    heatmap = tf.squeeze(heatmap)
+    Parameters
+    ----------
+    model : tf.keras.models.Model
+        The CNN model.
 
-    heatmap = tf.maximum(heatmap, 0) / tf.math.reduce_max(heatmap)
-    return heatmap.numpy()
+    image : tf.Dataset, (1, img_size, img_size, 3)
+        Dataset containing the image.
+
+    Returns
+    -------
+    saliency_map : array, (img_size, img_size, 3)
+        The class activation map.
+
+    Notes
+    -----
+    smooth_samples controls the number of calculating gradient iterations. It has a
+    critical impact on the saliency map generation time (up to 2-3 minutes on CPU).
+
+    smooth_noise is the noise spread level.
+    """
+    saliency = Saliency(model, model_modifier=ReplaceToLinear(), clone=True)
+    saliency_map = saliency(_score_function, next(iter(image)),
+                            smooth_samples=20, smooth_noise=0.2)
+    return saliency_map
+
 
 
 def get_superimposed_visualization(original_image, heatmap, alpha=0.4):
-    # Rescale heatmap to a range 0-255
-    heatmap = np.uint8(255 * heatmap)
-
     # Change to Numpy array
     original_image = original_image.convert("RGB")
     original_image = np.array(original_image)
-    original_image = original_image[:, :, :3]  # PNG have 4 channels: 3 colors + 1 transparency level
-
-    # Use jet colormap to colorize heatmap
-    jet = cm.get_cmap("jet")
-
-    # Use RGB values of the colormap
-    jet_colors = jet(np.arange(256))[:, :3]
-    jet_heatmap = jet_colors[heatmap]
+    # PNG have 4 channels: 3 colors + 1 transparency level
+    original_image = original_image[:, :, :3]
 
     # Create an image with RGB colorized heatmap
-    jet_heatmap = keras.preprocessing.image.array_to_img(jet_heatmap)
-    jet_heatmap = jet_heatmap.resize((original_image.shape[1], original_image.shape[0]))
-    jet_heatmap = keras.preprocessing.image.img_to_array(jet_heatmap)
+    heatmap = keras.preprocessing.image.array_to_img(heatmap)
+    heatmap = heatmap.resize((original_image.shape[1], original_image.shape[0]))
+    heatmap = keras.preprocessing.image.img_to_array(heatmap)
 
     # Superimpose the heatmap on original image
-    superimposed_img = jet_heatmap * alpha + original_image
+    superimposed_img = heatmap * alpha + original_image
     superimposed_img = keras.preprocessing.image.array_to_img(superimposed_img)
 
     return superimposed_img
