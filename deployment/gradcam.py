@@ -12,8 +12,8 @@ def grad_cam(model, image, last_conv_layer_name="top_conv"):
     model : tf.model
         The CNN model.
 
-    image : array, (img_size, img_size, 3)
-        The image to predict.
+    image : tf.Dataset, (1, img_size, img_size, 3)
+        Dataset containing the image
 
     last_conv_layer_name : str
         The last convolution layer name (needed for GradCAM).
@@ -23,11 +23,11 @@ def grad_cam(model, image, last_conv_layer_name="top_conv"):
     gc_image : array, (img_size, img_size, 3)
         The image with a GradCAM overlay.
     """
-    last_conv_layer = model.get_layer("efficientnet-b3").get_layer(last_conv_layer_name)
-    grad_model = tf.keras.models.Model(model.inputs, last_conv_layer.output)
+    last_conv_layer = model.get_layer(last_conv_layer_name)
+    grad_model = tf.keras.models.Model(model.inputs, [last_conv_layer.output, model.output])
 
     with tf.GradientTape() as tape:
-        last_conv_layer_output, preds = grad_model(image)
+        last_conv_layer_output, preds = grad_model(next(iter(image)))
         class_channel = preds  # Output neuron (here a sigmoid logit)
 
     grads = tape.gradient(class_channel, last_conv_layer_output)
@@ -44,6 +44,11 @@ def grad_cam(model, image, last_conv_layer_name="top_conv"):
 def get_superimposed_visualization(original_image, heatmap, alpha=0.4):
     # Rescale heatmap to a range 0-255
     heatmap = np.uint8(255 * heatmap)
+
+    # Change to Numpy array
+    original_image = original_image.convert("RGB")
+    original_image = np.array(original_image)
+    original_image = original_image[:, :, :3]  # PNG have 4 channels: 3 colors + 1 transparency level
 
     # Use jet colormap to colorize heatmap
     jet = cm.get_cmap("jet")

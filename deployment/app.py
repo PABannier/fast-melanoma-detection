@@ -49,7 +49,7 @@ def make_prediction(image):
         The confidence score of the prediction.
     """
     model = build_model(dim=DIM, ef=3)
-    model.load_weights("models/B3-512.h5")
+    # model.load_weights("models/B3-512.h5")
 
     st.markdown("***")
     st.markdown(model_predicting, unsafe_allow_html=True)
@@ -75,12 +75,12 @@ def make_prediction(image):
     # Display GradCAM visualization
     st.title("GradCAM visualization")
     st.write('GradCAM *(Class Activation Map)* highlights the important regions in the image for predicting the class concept. It helps to understand if the model based its predictions on the correct regions of the image.')
-    #heatmap = grad_cam(model, image, "top_conv")
-    #out_gradcam = get_superimposed_visualization(image, heatmap)
-    #st.image(out_gradcam, width=528, channels="RGB")
+    heatmap = grad_cam(model, inference_ds, "top_conv")
+    out_gradcam = get_superimposed_visualization(image, heatmap)
+    st.image(out_gradcam, width=528, channels="RGB")
 
     #Display the class probabilities table
-    st.title('**Class predictions:**')
+    st.title('**Class predictions**')
     classes['class probability %'] = [proba, 1 - proba]
     classes['class probability %'] = classes['class probability %'] * 100
     classes_proba = classes.style.background_gradient(cmap='Reds')
