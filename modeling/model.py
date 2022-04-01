@@ -6,8 +6,9 @@ from tf.keras import backend as K
 from tfa.optimizers import AdamW
 
 
-def build_model(dim=128, init_lr=3e-4, min_lr=1e-8, num_epochs=40, dropout=0.2,
-                weight_decay=5e-4, num_snapshots=5, multi_sample_dropout=True):
+def build_model(dim=128, init_lr=3e-4, min_lr=1e-8, num_epochs=40, num_classes=3,
+                dropout=0.2, weight_decay=5e-4, num_snapshots=5,
+                multi_sample_dropout=True):
     """Build model.
 
     Parameters
@@ -23,6 +24,9 @@ def build_model(dim=128, init_lr=3e-4, min_lr=1e-8, num_epochs=40, dropout=0.2,
 
     num_epochs : int
         Number of epochs.
+
+    num_classes : int
+        Number of classes (in the output of softmax layer).
 
     dropout : float
         Amount of dropout.
@@ -44,7 +48,7 @@ def build_model(dim=128, init_lr=3e-4, min_lr=1e-8, num_epochs=40, dropout=0.2,
     backbone = EfficientNetB6(
         include_top=False, weights="imagenet", input_shape=(dim, dim, 3))
     dropout_layer = Dropout(dropout)
-    fc = Dense(9, activation="softmax")
+    fc = Dense(num_classes, activation="softmax")
 
     x = GlobalAveragePooling2D()(backbone.output)
     if multi_sample_dropout:

@@ -19,7 +19,7 @@ jobs:
       - name: Lint with flake
         run: |
           pip install flake8
-          flake8 . --exclude="docs/","exploration/" --max-line-length=88
+          flake8 . --exclude="docs/","exploration/","modeling/" --max-line-length=88
 
       - name: Check doc style with pydocstyle
         run: |

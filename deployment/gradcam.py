@@ -1,11 +1,9 @@
 import numpy as np
 import matplotlib.cm as cm
-import tensorflow as tf
 from tensorflow import keras
 from tf_keras_vis.gradcam_plus_plus import GradcamPlusPlus
 from tk_keras_vis.saliency import Saliency
 from tf_keras_vis.utils.model_modifiers import ReplaceToLinear
-
 
 
 def _score_function(logit):
@@ -63,7 +61,6 @@ def smooth_grad(model, image):
     saliency_map = saliency(_score_function, next(iter(image)),
                             smooth_samples=20, smooth_noise=0.2)
     return saliency_map
-
 
 
 def get_superimposed_visualization(original_image, heatmap, alpha=0.4):

@@ -1,10 +1,23 @@
 import tensorflow as tf
-from .preprocessing import transform
-from .utils import load_device_strategy
+from .preprocessing import augment, transform
 
 
 def read_tfrecord(example):
-    """Reads a TFRecord file instance."""
+    """Read a TFRecord file instance.
+
+    Parameters
+    ----------
+    example : TFRecord
+        The Tensorflow record.
+
+    Returns
+    -------
+    image : tf.Tensor
+        The image.
+
+    target : int
+        The diagnosis.
+    """
     tfrec_format = {
         'image': tf.io.FixedLenFeature([], tf.string),
         'image_name': tf.io.FixedLenFeature([], tf.string),
@@ -19,61 +32,29 @@ def read_tfrecord(example):
     return example['image'], example['target']
 
 
-def prepare_image(img, cfg, augment=True, dim=256):
-    """Reads the image and optionally applies transformation to it.
-
-    Parameters
-    ----------
-    img : tf.Tensor of shape (dim, dim, 3)
-        The input image tensor
-    augment : bool
-        Applies data augmentation
-    dim : float
-        Output dimension of the image
-
-    Returns
-    -------
-    tf.Tensor of shape (dim, dim, 3)
-    """
-    img = tf.image.decode_jpeg(img, channels=3)
-    img = tf.cast(img, tf.float32) / 255.0
-
-    if augment:
-        img = transform(img, dim, cfg["transform"]["rotation"],
-                        cfg["transform"]["shear"],
-                        cfg["transform"]["height_zoom"],
-                        cfg["transform"]["width_zoom"],
-                        cfg["transform"]["height_shift"],
-                        cfg["transform"]["width_shift"])
-        img = tf.image.random_flip_left_right(img)
-        img = tf.image.random_hue(img, 0.01)
-        img = tf.image.random_saturation(img, 0.7, 1.3)
-        img = tf.image.random_contrast(img, 0.8, 1.2)
-        img = tf.image.random_brightness(img, 0.1)
-
-    img = tf.reshape(img, [dim, dim, 3])
-
-    return img
-
-
-def get_dataset(files, cfg, auto, replicas, augment=False, shuffle=False,
+def get_dataset(files, auto, replicas, augment=False, shuffle=False,
                 repeat=False, batch_size=16, dim=256):
     """Gets the dataset to train the model on.
 
     Parameters
     ----------
     files:
-        Paths to the TFRecord files
+        Paths to the TFRecord files.
+
     augment : bool
-        Applies data augmentation
+        Applies data augmentation.
+
     shuffle : bool
-        Shuffles the dataset
+        Shuffles the dataset.
+
     repeat : bool
-        Repeats the dataset
+        Repeats the dataset.
+
     batch_size : int
-        Batch size
+        Batch size.
+    
     dim : int
-        Image size
+        Image size.
     """
     ds = tf.data.TFRecordDataset(files, num_parallel_reads=auto)
     ds = ds.cache()
@@ -89,9 +70,13 @@ def get_dataset(files, cfg, auto, replicas, augment=False, shuffle=False,
 
     ds = ds.map(read_tfrecord, num_parallel_calls=auto)
     ds = ds.map(
-        lambda img, imgname_or_label:
-            (prepare_image(img, cfg, augment=augment, dim=dim), imgname_or_label),
-        num_parallel_calls=auto)
+        lambda img, label: (tf.image.resize(img, (dim, dim)), label),
+        num_parallel_calls=auto
+        )
+    ds = ds.map(
+            lambda img, label: (tf.py_function(augment, [img], [tf.float32])[0], label),
+            num_parallel_calls=auto
+        )
 
     ds = ds.batch(batch_size * replicas)
     ds = ds.prefetch(auto)
