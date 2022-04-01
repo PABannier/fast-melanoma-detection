@@ -31,8 +31,18 @@ def train_model(data_path, cfg, auto, replicas, strategy):
     oof_tar = []
 
     for valid_fold in range(cfg["n_folds"]):
-        files_train = None
-        files_valid = None
+
+        train_indices, valid_indices = [], []
+        for fold in range(5):
+            if fold == valid_fold:
+                valid_indices.extend(range(3 * fold, 3 * (fold + 1)))
+            else:
+                train_indices.extend(range(3 * fold, 3 * (fold + 1)))
+
+        files_train = tf.io.gfile.glob(
+            [data_path + '/train%.2i*.tfrec' % x for x in train_indices])
+        files_valid = tf.io.gfile.glob(
+            [data_path + '/train%.2i*tfrec' % x for x in valid_indices])
 
         np.random.shuffle(files_train)
 
@@ -83,7 +93,7 @@ def train_model(data_path, cfg, auto, replicas, strategy):
 
         ct_valid = count_data_items(files_valid)
         steps = cfg["post_processing"]["tta_rounds"] * ct_valid / \
-                cfg["modeling"]["batch_size"] / 4 / replicas
+                cfg["train"]["batch_size"] / 4 / replicas
 
         pred = model.predict(ds_valid, steps=steps, verbose=True)\
             [:cfg["post_processing"]["tta_rounds"] * ct_valid,]
@@ -106,5 +116,5 @@ def train_model(data_path, cfg, auto, replicas, strategy):
 
         # Plot training
         if cfg["plot_results"]:
-           make_results_plot(history, cfg["modeling"]["epochs"], valid_fold,
+           make_results_plot(history, cfg["train"]["epochs"], valid_fold,
                              cfg["input"]["image_size"], "Model name")
