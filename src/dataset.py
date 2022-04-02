@@ -1,5 +1,5 @@
 import tensorflow as tf
-from .preprocessing import augment, transform
+from preprocessing import augment
 
 
 def read_tfrecord(example):

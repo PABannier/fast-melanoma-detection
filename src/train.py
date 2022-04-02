@@ -6,9 +6,9 @@ from sklearn.metrics import roc_auc_score
 import tensorflow as tf
 from tensorflow.keras import backend as K
 
-from .dataset import get_dataset
-from .model import build_model
-from .utils import count_data_items, make_results_plot
+from dataset import get_dataset
+from model import build_model
+from utils import count_data_items, make_results_plot
 
 
 def train_model(data_path, cfg, auto, replicas, strategy):

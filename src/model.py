@@ -1,9 +1,9 @@
 import tensorflow as tf
-from tf.keras.layers import GlobalAveragePooling2D, Dense, Dropout
-from tf.keras import Model
-from tf.keras.applications import EfficientNetB6
-from tf.keras import backend as K
-from tfa.optimizers import AdamW
+from tensorflow.keras.layers import GlobalAveragePooling2D, Dense, Dropout
+from tensorflow.keras import Model
+from tensorflow.keras.applications import EfficientNetB6
+from tensorflow.keras import backend as K
+from tensorflow_addons.optimizers import AdamW
 
 
 def build_model(dim=128, init_lr=3e-4, min_lr=1e-8, num_epochs=40, num_classes=3,
