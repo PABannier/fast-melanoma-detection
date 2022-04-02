@@ -1,5 +1,5 @@
 import tensorflow as tf
-from preprocessing import augment
+from preprocessing import generate_aug_image
 
 
 def read_tfrecord(example):
@@ -52,7 +52,7 @@ def get_dataset(files, auto, replicas, augment=False, shuffle=False,
 
     batch_size : int
         Batch size.
-    
+
     dim : int
         Image size.
     """
@@ -69,14 +69,22 @@ def get_dataset(files, auto, replicas, augment=False, shuffle=False,
         ds = ds.with_options(opt)
 
     ds = ds.map(read_tfrecord, num_parallel_calls=auto)
-    import ipdb; ipdb.set_trace()
+    ds = ds.map(
+        lambda img, label: (tf.image.decode_jpeg(img, channels=3), label),
+        num_parallel_calls=auto
+    )
     ds = ds.map(
         lambda img, label: (tf.image.resize(img, (dim, dim)), label),
         num_parallel_calls=auto
         )
-    ds = ds.map(
-            lambda img, label: (tf.py_function(augment, [img], [tf.float32])[0], label),
-            num_parallel_calls=auto
+
+    if augment:
+        ds = ds.map(
+                lambda img, label: (
+                    tf.py_function(func=generate_aug_image, inp=[img], Tout=tf.float32),
+                    label
+                ),
+                num_parallel_calls=auto
         )
 
     ds = ds.batch(batch_size * replicas)

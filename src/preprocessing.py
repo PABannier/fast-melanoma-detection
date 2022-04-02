@@ -26,22 +26,22 @@ def get_rand_aug(mean=12.):
     return iaa.RandAugment(n=3, m=m)
 
 
-def augment(images):
+def generate_aug_image(image):
     """Generate random data augmentation from a set of images.
     
     Parameters
     ----------
-    images : tf.Tensor
-        The images.
+    image : tf.Tensor
+        The image.
     
     Returns
     -------
-    augmented_images : np.array
-        The augmented images.
+    augmented_image : np.array
+        The augmented image.
     
     Notes 
     -----
     RandAugment does not accept tf.Tensor, hence the explicit casting to numpy arrays.
     """
-    images = tf.cast(images, tf.uint8)
-    return get_rand_aug()(images=images.numpy())
+    image = tf.cast(image, tf.uint8)
+    return get_rand_aug()(image=image.numpy())
