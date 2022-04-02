@@ -69,6 +69,7 @@ def get_dataset(files, auto, replicas, augment=False, shuffle=False,
         ds = ds.with_options(opt)
 
     ds = ds.map(read_tfrecord, num_parallel_calls=auto)
+    import ipdb; ipdb.set_trace()
     ds = ds.map(
         lambda img, label: (tf.image.resize(img, (dim, dim)), label),
         num_parallel_calls=auto

@@ -30,7 +30,7 @@ def train_model(data_path, cfg, auto, replicas, strategy):
     oof_val = []
     oof_tar = []
 
-    for valid_fold in range(cfg["n_folds"]):
+    for valid_fold in range(cfg["validation"]["n_folds"]):
 
         train_indices, valid_indices = [], []
         for fold in range(5):
