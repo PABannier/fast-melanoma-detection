@@ -11,6 +11,10 @@ __pycache__/
 *.jpg
 *.png
 
+# Data
+*.tfrec
+*.csv
+
 # Models
 *.h5
 
