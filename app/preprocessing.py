@@ -134,19 +134,19 @@ def transform(image, img_size=256, rotation=180., shear=2., height_zoom=8.,
 
     transformation_matrix = get_mat(rot, shr, h_zoom, w_zoom, h_shift, w_shift)
 
-    # LIST DESTINATION PIXEL INDICES
-    x   = tf.repeat(tf.range(img_size//2, -img_size//2,-1), img_size)
-    y   = tf.tile(tf.range(-img_size//2, img_size//2), [img_size])
-    z   = tf.ones([img_size*img_size], dtype='int32')
-    idx = tf.stack( [x,y,z] )
+    # List destination pixel indices
+    x = tf.repeat(tf.range(img_size // 2, -img_size // 2, -1), img_size)
+    y = tf.tile(tf.range(-img_size // 2, img_size // 2), [img_size])
+    z = tf.ones([img_size * img_size], dtype='int32')
+    idx = tf.stack([x, y, z])
 
-    # ROTATE DESTINATION PIXELS ONTO ORIGIN PIXELS
+    # Rotate destination pixel indices
     idx2 = K.dot(transformation_matrix, tf.cast(idx, dtype='float32'))
     idx2 = K.cast(idx2, dtype='int32')
-    idx2 = K.clip(idx2, -img_size//2+aux_img_size+1, img_size//2)
+    idx2 = K.clip(idx2, -img_size // 2 + aux_img_size + 1, img_size // 2)
 
-    # FIND ORIGIN PIXEL VALUES
-    idx3 = tf.stack([img_size//2-idx2[0,], img_size//2-1+idx2[1,]])
-    out  = tf.gather_nd(image, tf.transpose(idx3))
+    # Find origin pixel values
+    idx3 = tf.stack([img_size // 2 - idx2[0, ], img_size // 2 - 1 + idx2[1, ]])
+    out = tf.gather_nd(image, tf.transpose(idx3))
 
     return tf.reshape(out, [img_size, img_size, 3])

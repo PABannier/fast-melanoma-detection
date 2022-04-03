@@ -1,6 +1,4 @@
 import streamlit as st
-
-import tensorflow as tf
 import numpy as np
 
 from PIL import Image
@@ -8,9 +6,8 @@ from PIL import Image
 from utils import build_model, build_dataset
 from gradcam import grad_cam, get_superimposed_visualization
 from dataset import classes
-from html_markdown import (app_off, app_off2, model_predicting,
-                           image_uploaded_success, class0, class1,
-                           class0_side, class1_side)
+from html_markdown import (app_off, app_off2, model_predicting, image_uploaded_success,
+                           class0, class1, class0_side, class1_side)
 
 
 DIM = 384
@@ -23,7 +20,9 @@ st.set_option("deprecation.showfileUploaderEncoding", False)
 st.title("Melanoma classification Web App")
 
 # Main presentation
-st.write("The app classifies benign and malignant tumors. The model was trained with the [SIIM-ISIC Melanoma 2020 dataset on Kaggle](https://www.kaggle.com/c/siim-isic-melanoma-classification). ")
+st.write("The app classifies benign and malignant tumors. The model was trained with \
+          the [SIIM-ISIC Melanoma 2020 dataset on Kaggle] \
+          (https://www.kaggle.com/c/siim-isic-melanoma-classification). ")
 st.markdown('***')
 
 # Banner
@@ -49,7 +48,7 @@ def make_prediction(image):
         The confidence score of the prediction.
     """
     model = build_model(dim=DIM, ef=3)
-    model.load_weights("models/B3-512.h5")
+    # model.load_weights("models/B3-512.h5")
 
     st.markdown("***")
     st.markdown(model_predicting, unsafe_allow_html=True)
@@ -74,22 +73,25 @@ def make_prediction(image):
 
     # Display GradCAM visualization
     st.title("GradCAM visualization")
-    st.write('GradCAM *(Class Activation Map)* highlights the important regions in the image for predicting the class concept. It helps to understand if the model based its predictions on the correct regions of the image.')
-    #heatmap = grad_cam(model, image, "top_conv")
-    #out_gradcam = get_superimposed_visualization(image, heatmap)
-    #st.image(out_gradcam, width=528, channels="RGB")
+    st.write("GradCAM *(Class Activation Map)* highlights the important regions in" +
+             "the image for predicting the class concept. It helps to understand" +
+             "if the model based its predictions on the correct regions of the image.")
+    heatmap = grad_cam(model, inference_ds, "top_conv")
+    out_gradcam = get_superimposed_visualization(image, heatmap)
+    st.image(out_gradcam, width=528, channels="RGB")
 
-    #Display the class probabilities table
-    st.title('**Class predictions:**')
+    # Display the class probabilities table
+    st.title('**Class predictions**')
     classes['class probability %'] = [proba, 1 - proba]
     classes['class probability %'] = classes['class probability %'] * 100
     classes_proba = classes.style.background_gradient(cmap='Reds')
     st.write(classes_proba)
 
 
-#Set the box for the user to upload an image
+# Set the box for the user to upload an image
 st.write("**Upload your image**")
-uploaded_file = st.file_uploader("Upload your image in JPG or PNG format", type=["jpg", "png"])
+uploaded_file = st.file_uploader("Upload your image in JPG or PNG format",
+                                 type=["jpg", "png"])
 
 
 if not uploaded_file:

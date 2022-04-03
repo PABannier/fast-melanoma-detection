@@ -12,7 +12,6 @@ def load_device_strategy(device):
     device: str, option = "TPU" or "GPU"
         The device type used to train the model on
     """
-
     if device == "TPU":
         print("connecting to TPU...")
         try:
@@ -68,8 +67,8 @@ def make_results_plot(history, epochs, fold, img_size, model_name):
     plt.scatter(x, y, s=200, color='#1f77b4')
     plt.text(x - 0.03 * xdist, y - 0.13 * ydist, 'max auc\n%.2f' % y, size=14)
 
-    plt.ylabel('AUC',size=14)
-    plt.xlabel('Epoch',size=14)
+    plt.ylabel('AUC', size=14)
+    plt.xlabel('Epoch', size=14)
     plt.legend(loc=2)
 
     plt2 = plt.gca().twinx()
@@ -86,9 +85,9 @@ def make_results_plot(history, epochs, fold, img_size, model_name):
     plt.scatter(x, y, s=200, color='#d62728')
     plt.text(x - 0.03 * xdist, y + 0.05 * ydist, 'min loss', size=14)
 
-    plt.ylabel('Loss',size=14)
+    plt.ylabel('Loss', size=14)
 
-    plt.title('FOLD %i - Image Size %i, %s'% (fold + 1, img_size, model_name),
+    plt.title('FOLD %i - Image Size %i, %s' % (fold + 1, img_size, model_name),
               size=18)
     plt.legend(loc=3)
-    plt.show()
+    plt.savefig("results/%i.png" % fold)

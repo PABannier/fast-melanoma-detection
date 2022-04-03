@@ -1,0 +1,29 @@
+seed: 0
+
+data_year: 2019
+
+input:
+  image_size: 512
+
+train:
+  batch_size: 64
+  init_lr: 3.0e-4
+  min_lr: 1.0e-8
+  num_epochs: 40
+  dropout: 0.2
+  weight_decay: 5.0e-4
+  num_snapshots: 5
+  multi_sample_dropout: True
+
+post_processing:
+  tta_rounds: 12
+
+model:
+  num_classes: 9
+
+validation:
+  n_folds: 5
+
+plot_results: True
+
+tfrec_per_fold: 6

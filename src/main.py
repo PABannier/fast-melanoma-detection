@@ -1,16 +1,15 @@
 import argparse
 import yaml
 
-from kaggle_datasets import KaggleDatasets
-
-from .train import train_model_kfold
-from .utils import load_device_strategy
+from train import train_model
+from utils import load_device_strategy
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('config', type=str)
-    parser.add_argument('device', type=str)
+    parser.add_argument('--config', type=str)
+    parser.add_argument('--device', type=str)
+    parser.add_argument('--data_path', type=str)
     return parser.parse_args()
 
 
@@ -24,11 +23,8 @@ if __name__ == "__main__":
         raise ValueError("Invalid device. Available: CPU, GPU, TPU. Got: %s" % \
                          args.device)
 
-    # Useful for training on Kaggle
     auto, strategy, tpu = load_device_strategy(args.device)
     replicas = strategy.num_replicas_in_sync
     print("Num remplicas:", replicas)
 
-    dataset_path = KaggleDatasets().get_gcs_path(
-        f'melanoma-{cfg["input"]["image_size"]}x{cfg["input"]["image_size"]}')
-    train_model_kfold(dataset_path, cfg, args.device, tpu, strategy, replicas)
+    train_model(args.data_path, cfg, auto, replicas, strategy)
