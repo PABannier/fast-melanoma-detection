@@ -35,9 +35,15 @@ def train_model(data_path, cfg, auto, replicas, strategy):
         train_indices, valid_indices = [], []
         for fold in range(5):
             if fold == valid_fold:
-                valid_indices.extend(range(3 * fold, 3 * (fold + 1)))
+                valid_indices.extend(range(
+                    cfg["tfrec_per_fold"] * fold,
+                    cfg["tfrec_per_fold"] * (fold + 1)
+                ))
             else:
-                train_indices.extend(range(3 * fold, 3 * (fold + 1)))
+                train_indices.extend(range(
+                    cfg["tfrec_per_fold"] * fold,
+                    cfg["tfrec_per_fold"] * (fold + 1)
+                ))
 
         files_train = tf.io.gfile.glob(
             [data_path + '/train%.2i*.tfrec' % x for x in train_indices])
@@ -46,11 +52,11 @@ def train_model(data_path, cfg, auto, replicas, strategy):
 
         np.random.shuffle(files_train)
 
-        train_dataset = get_dataset(files_train, auto, replicas, augment=True,
+        train_dataset = get_dataset(files_train, cfg, auto, replicas, augment=True,
                                     shuffle=True, repeat=True,
                                     dim=cfg["input"]["image_size"],
                                     batch_size=cfg["train"]["batch_size"])
-        valid_dataset = get_dataset(files_valid, auto, replicas, augment=False,
+        valid_dataset = get_dataset(files_valid, cfg, auto, replicas, augment=False,
                                     shuffle=False, repeat=False,
                                     dim=cfg["input"]["image_size"])
 

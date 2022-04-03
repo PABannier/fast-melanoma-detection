@@ -1,5 +1,7 @@
 seed: 0
 
+data_year: 2019
+
 input:
   image_size: 512
 
@@ -23,3 +25,5 @@ validation:
   n_folds: 5
 
 plot_results: True
+
+tfrec_per_fold: 6

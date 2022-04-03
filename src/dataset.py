@@ -2,7 +2,7 @@ import tensorflow as tf
 from preprocessing import generate_aug_image
 
 
-def read_tfrecord(example):
+def read_tfrecord(example, cfg):
     """Read a TFRecord file instance.
 
     Parameters
@@ -29,10 +29,24 @@ def read_tfrecord(example):
         'target': tf.io.FixedLenFeature([], tf.int64)
     }
     example = tf.io.parse_single_example(example, tfrec_format)
-    return example['image'], example['target']
+    target = None
+    num_classes = 0
+
+    if cfg["data_year"] == 2019:
+        # Diagnoses are initially labelled from 9 to 17
+        # -9 to be between 0 and 8
+        target = example["diagnosis"] - 9
+        num_classes = 9
+    else:
+        target = example["target"]
+        num_classes = 3
+
+    target = tf.one_hot(target, num_classes)
+
+    return example['image'], target
 
 
-def get_dataset(files, auto, replicas, augment=False, shuffle=False,
+def get_dataset(files, cfg, auto, replicas, augment=False, shuffle=False,
                 repeat=False, batch_size=16, dim=256):
     """Gets the dataset to train the model on.
 
@@ -68,7 +82,7 @@ def get_dataset(files, auto, replicas, augment=False, shuffle=False,
         opt.experimental_deterministic = False
         ds = ds.with_options(opt)
 
-    ds = ds.map(read_tfrecord, num_parallel_calls=auto)
+    ds = ds.map(lambda x: read_tfrecord(x, cfg), num_parallel_calls=auto)
     ds = ds.map(
         lambda img, label: (tf.image.decode_jpeg(img, channels=3), label),
         num_parallel_calls=auto
@@ -76,12 +90,16 @@ def get_dataset(files, auto, replicas, augment=False, shuffle=False,
     ds = ds.map(
         lambda img, label: (tf.image.resize(img, (dim, dim)), label),
         num_parallel_calls=auto
-        )
+    )
 
     if augment:
         ds = ds.map(
                 lambda img, label: (
-                    tf.py_function(func=generate_aug_image, inp=[img], Tout=tf.float32),
+                    tf.py_function(
+                        func=generate_aug_image,
+                        inp=[img],
+                        Tout=tf.float32
+                    ),
                     label
                 ),
                 num_parallel_calls=auto
